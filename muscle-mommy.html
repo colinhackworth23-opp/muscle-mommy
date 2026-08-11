@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Muscle Mommy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Muscle Mommy">
+<meta name="theme-color" content="#faf7f8">
+<meta name="theme-color" content="#100d0e" media="(prefers-color-scheme: dark)">
+<style>
+:root, :root[data-theme='light'] {
+  --bg:      #faf7f8;
+  --bg-1:    #f2ecee;
+  --bg-2:    #e8dfe2;
+  --ink:     #171314;
+  --ink-2:   #5c5457;
+  --ink-3:   #8f868a;
+  --ink-4:   #c2b8bc;
+  --accent:  #a24f74;
+  --accent-bg: #f4e3ea;
+  --green:   #3f7a4a;
+  --green-bg:#e4f1e6;
+  --amber:   #9a6a1f;
+  --amber-bg:#f7ecd8;
+  --red:     #a33636;
+  --red-bg:  #f8e6e6;
+  --f-num: 'ui-monospace','SF Mono','JetBrains Mono','Menlo','Courier New',monospace;
+}
+:root[data-theme='dark'] {
+  --bg:      #0f0c0d;
+  --bg-1:    #1a1516;
+  --bg-2:    #241d1f;
+  --ink:     #f6f1f2;
+  --ink-2:   #b7abae;
+  --ink-3:   #7d7376;
+  --ink-4:   #4c4547;
+  --accent:  #e08bad;
+  --accent-bg: #34222b;
+  --green:   #7fce8f;
+  --green-bg:#173420;
+  --amber:   #e0b25c;
+  --amber-bg:#332711;
+  --red:     #e08080;
+  --red-bg:  #331717;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg:      #0f0c0d;
+    --bg-1:    #1a1516;
+    --bg-2:    #241d1f;
+    --ink:     #f6f1f2;
+    --ink-2:   #b7abae;
+    --ink-3:   #7d7376;
+    --ink-4:   #4c4547;
+    --accent:  #e08bad;
+    --accent-bg: #34222b;
+    --green:   #7fce8f;
+    --green-bg:#173420;
+    --amber:   #e0b25c;
+    --amber-bg:#332711;
+    --red:     #e08080;
+    --red-bg:  #331717;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { background: var(--bg); color: var(--ink); }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100vh;
+  position: relative;
+}
+input, textarea, select { font-size: 16px; font-family: inherit; }
+.header {
+  position: sticky; top: 0; z-index: 20;
+  background: var(--bg);
+  padding: calc(env(safe-area-inset-top) + 14px) 20px 12px;
+  border-bottom: 1px solid var(--bg-2);
+}
+.h-title { font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
+.h-sub { font-size: 12px; color: var(--ink-3); margin-top: 2px; font-family: var(--f-num); text-transform: uppercase; letter-spacing: 0.06em; }
+.screen { display: none; padding: 16px 20px 100px; }
+.screen.active { display: block; }
+.spacer { height: 40px; }
+.empty-state { text-align: center; color: var(--ink-3); font-size: 14px; padding: 40px 20px; line-height: 1.5; }
+
+/* Cards */
+.card { background: var(--bg-1); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+.card-title { font-size: 15px; font-weight: 700; }
+.card-sub { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+
+/* Phase progress */
+.phase-dots { display: flex; gap: 6px; margin: 10px 0 4px; }
+.phase-dot { flex: 1; height: 6px; border-radius: 3px; background: var(--bg-2); }
+.phase-dot.done { background: var(--accent); }
+.phase-dot.active { background: var(--accent); opacity: 0.55; }
+.phase-label { font-size: 11px; color: var(--ink-3); font-family: var(--f-num); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 6px; }
+
+/* Callouts */
+.callout { border-radius: 12px; padding: 12px 14px; font-size: 13px; line-height: 1.45; margin-bottom: 12px; }
+.c-accent { background: var(--accent-bg); color: var(--accent); }
+.c-green { background: var(--green-bg); color: var(--green); }
+.c-amber { background: var(--amber-bg); color: var(--amber); }
+.c-gray  { background: var(--bg-1); color: var(--ink-2); }
+
+/* Session picker */
+.chip-row { display: flex; gap: 8px; margin-bottom: 14px; }
+.chip { flex: 1; padding: 10px 0; text-align: center; border-radius: 10px; background: var(--bg-1); font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.chip.active { background: var(--accent); color: #fff; }
+
+/* Exercise rows */
+.ex-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--bg-2); }
+.ex-row:last-child { border-bottom: none; }
+.ex-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--ink-4); flex-shrink: 0; margin-top: 2px; }
+.ex-check.checked { background: var(--accent); border-color: var(--accent); position: relative; }
+.ex-check.checked::after { content:''; position:absolute; left:8px; top:4px; width:5px; height:10px; border:solid #fff; border-width:0 2px 2px 0; transform:rotate(45deg); }
+.ex-name { font-size: 14px; font-weight: 600; }
+.ex-detail { font-size: 12px; color: var(--ink-3); margin-top: 2px; line-height: 1.4; }
+
+.btn-primary { width: 100%; padding: 15px; border-radius: 12px; background: var(--accent); color: #fff; font-size: 15px; font-weight: 700; border: none; margin-top: 8px; }
+.btn-primary:disabled { opacity: 0.4; }
+.btn-secondary { width: 100%; padding: 14px; border-radius: 12px; background: var(--bg-1); color: var(--ink); font-size: 14px; font-weight: 700; border: none; margin-top: 8px; }
+
+/* Locked phase preview */
+.locked-card { opacity: 0.55; }
+.lock-icon { font-size: 12px; }
+
+/* Activity feed */
+.activity-group-label { font-size: 11px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; font-family: var(--f-num); margin: 18px 0 8px; }
+.activity-group-label:first-child { margin-top: 0; }
+.activity-row { display: flex; gap: 12px; padding: 12px; background: var(--bg-1); border-radius: 14px; margin-bottom: 8px; }
+.activity-icon { font-size: 20px; width: 30px; text-align: center; flex-shrink: 0; }
+.activity-headline { font-size: 14px; font-weight: 700; }
+.activity-sub { font-size: 11px; color: var(--ink-3); margin-top: 1px; font-family: var(--f-num); }
+.activity-detail { font-size: 12px; color: var(--ink-2); margin-top: 4px; }
+.activity-notes { font-size: 12px; color: var(--ink-2); margin-top: 4px; font-style: italic; }
+.activity-pain-row { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+.activity-pain-chip { font-size:11px; background: var(--red-bg); color: var(--red); padding: 3px 8px; border-radius: 20px; }
+
+/* FAB */
+.fab-wrap { position: fixed; right: 20px; bottom: calc(env(safe-area-inset-bottom) + 78px); z-index: 15; display: none; }
+.fab-wrap.show { display: block; }
+.fab { width: 56px; height: 56px; border-radius: 50%; background: var(--accent); border: none; font-size: 24px; color: #fff; box-shadow: 0 6px 18px rgba(0,0,0,0.25); }
+
+/* Modal */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 30; display: none; align-items: flex-end; }
+.modal.visible { display: flex; }
+.modal-card { background: var(--bg); width: 100%; border-radius: 20px 20px 0 0; padding: 20px 20px calc(env(safe-area-inset-bottom) + 20px); max-height: 85vh; overflow-y: auto; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.modal-title { font-size: 17px; font-weight: 800; }
+.modal-sub { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+.modal-close { width: 30px; height: 30px; border-radius: 50%; background: var(--bg-1); border: none; font-size: 16px; color: var(--ink-2); }
+.modal-section { margin-bottom: 16px; }
+.modal-label { font-size: 12px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.modal-optional { font-weight: 400; text-transform: none; color: var(--ink-3); }
+.chip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.m-chip { padding: 12px; border-radius: 10px; background: var(--bg-1); font-size: 13px; font-weight: 700; color: var(--ink-2); border: none; text-align: center; }
+.m-chip.selected { background: var(--accent); color: #fff; }
+.feel-grid { display: flex; gap: 10px; }
+.feel-opt { flex: 1; padding: 14px; border-radius: 12px; background: var(--bg-1); border: none; text-align: center; }
+.feel-opt.selected { background: var(--accent-bg); outline: 2px solid var(--accent); }
+.feel-emoji { font-size: 22px; }
+.feel-lbl { font-size: 12px; font-weight: 700; margin-top: 4px; color: var(--ink-2); }
+.yn-row { display: flex; gap: 10px; }
+.yn-opt { flex: 1; padding: 12px; border-radius: 10px; background: var(--bg-1); border: none; font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.yn-opt.selected-yes { background: var(--red-bg); color: var(--red); outline: 2px solid var(--red); }
+.yn-opt.selected-no { background: var(--green-bg); color: var(--green); outline: 2px solid var(--green); }
+.m-input { width: 100%; padding: 12px; border-radius: 10px; background: var(--bg-1); border: none; color: var(--ink); }
+.m-textarea { width: 100%; padding: 12px; border-radius: 10px; background: var(--bg-1); border: none; color: var(--ink); resize: none; }
+
+/* Bottom nav */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
+  max-width: 430px; margin: 0 auto;
+  background: var(--bg);
+  border-top: 1px solid var(--bg-2);
+  display: flex;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.nav-btn { flex: 1; background: none; border: none; padding: 10px 0 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 44px; }
+.nav-icon { width: 22px; height: 22px; border-radius: 6px; background: var(--ink-4); }
+.nav-icon.on { background: var(--accent); }
+.nav-lbl { font-size: 10px; font-weight: 700; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.04em; }
+.nav-lbl.on { color: var(--accent); }
+
+.theme-toggle { display: flex; background: var(--bg); border-radius: 10px; padding: 3px; gap: 3px; }
+.theme-opt { flex: 1; padding: 8px 0; border-radius: 8px; border: none; background: transparent; font-size: 12px; font-weight: 700; color: var(--ink-3); }
+.theme-opt.active { background: var(--accent); color: #fff; }
+.set-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
+.set-row-label { font-size: 13px; color: var(--ink-2); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="h-title" id="headerTitle">Muscle Mommy</div>
+  <div class="h-sub" id="headerSub">Phase 1 · Core & Pelvic Floor</div>
+</div>
+
+<!-- PROGRAM SCREEN -->
+<div class="screen active" id="screen-program">
+  <div id="programContent"></div>
+</div>
+
+<!-- ACTIVITY SCREEN -->
+<div class="screen" id="screen-activity">
+  <div id="activity-content"></div>
+</div>
+
+<!-- SETTINGS SCREEN -->
+<div class="screen" id="screen-settings">
+  <div class="card">
+    <div class="card-title">Appearance</div>
+    <div style="margin-top:10px" class="theme-toggle" id="themeToggle">
+      <button class="theme-opt" data-theme="auto" onclick="setTheme('auto')">Auto</button>
+      <button class="theme-opt" data-theme="light" onclick="setTheme('light')">Light</button>
+      <button class="theme-opt" data-theme="dark" onclick="setTheme('dark')">Dark</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Current Phase</div>
+    <div class="card-sub" id="settingsPhaseSub">Phase 1 · Core & Pelvic Floor Foundation</div>
+    <div class="chip-row" style="margin-top:12px">
+      <button class="chip" data-phase="1" onclick="manualSetPhase(1)">Phase 1</button>
+      <button class="chip" data-phase="2" onclick="manualSetPhase(2)">Phase 2</button>
+      <button class="chip" data-phase="3" onclick="manualSetPhase(3)">Phase 3</button>
+    </div>
+    <div class="callout c-gray" style="margin-top:10px">Phase normally advances only after a check-in clears you (no leaking, no doming, no pain). Use this to override manually if needed.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Data</div>
+    <div class="card-sub">Everything is stored on this phone only.</div>
+    <button class="btn-secondary" onclick="resetAllData()">Reset all data</button>
+  </div>
+  <div class="spacer"></div>
+</div>
+
+<!-- FAB: log unstructured activity -->
+<div class="fab-wrap" id="fabWrap" onclick="openActivityLogger()">
+  <button class="fab" aria-label="Log activity">+</button>
+</div>
+
+<!-- LOG UNSTRUCTURED ACTIVITY MODAL -->
+<div class="modal" id="logModal" onclick="closeActivityLogger(event)">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Log Activity</div>
+        <div class="modal-sub" id="logModalDate">Today</div>
+      </div>
+      <button class="modal-close" onclick="closeActivityLogger()">&times;</button>
+    </div>
+    <div class="modal-section">
+      <div class="modal-label">Type</div>
+      <div class="chip-grid">
+        <button class="m-chip" data-type="Walk" onclick="setLogType('Walk')">🚶 Walk</button>
+        <button class="m-chip" data-type="Pilates" onclick="setLogType('Pilates')">🧘 Pilates</button>
+        <button class="m-chip" data-type="Yoga" onclick="setLogType('Yoga')">🧘‍♀️ Yoga</button>
+        <button class="m-chip" data-type="Class" onclick="setLogType('Class')">🏋️‍♀️ Gym Class</button>
+      </div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-label">Duration</div>
+      <input class="m-input" id="logDuration" type="number" inputmode="numeric" placeholder="Minutes">
+    </div>
+    <div class="modal-section">
+      <div class="modal-label">How'd it feel?</div>
+      <div class="feel-grid">
+        <button class="feel-opt" data-feel="good" onclick="setLogFeel('good')">
+          <div class="feel-emoji">👍</div><div class="feel-lbl">Good</div>
+        </button>
+        <button class="feel-opt" data-feel="rough" onclick="setLogFeel('rough')">
+          <div class="feel-emoji">👎</div><div class="feel-lbl">Rough</div>
+        </button>
+      </div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-label">Notes <span class="modal-optional">optional</span></div>
+      <textarea class="m-textarea" id="logNotes" rows="3" placeholder="Anything worth remembering?"></textarea>
+    </div>
+    <button class="btn-primary" id="logSaveBtn" onclick="saveActivityLog()" disabled>Save</button>
+  </div>
+</div>
+
+<!-- CHECK-IN MODAL -->
+<div class="modal" id="checkinModal" onclick="closeCheckin(event)">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Phase Check-In</div>
+        <div class="modal-sub">Quick gate before moving on</div>
+      </div>
+      <button class="modal-close" onclick="closeCheckin()">&times;</button>
+    </div>
+    <div class="modal-section">
+      <div class="modal-label">Any leaking during or after exercise?</div>
+      <div class="yn-row">
+        <button class="yn-opt" data-q="leak" data-v="yes" onclick="setCheckin('leak','yes')">Yes</button>
+        <button class="yn-opt" data-q="leak" data-v="no" onclick="setCheckin('leak','no')">No</button>
+      </div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-label">Any doming/coning along the midline under load?</div>
+      <div class="yn-row">
+        <button class="yn-opt" data-q="dome" data-v="yes" onclick="setCheckin('dome','yes')">Yes</button>
+        <button class="yn-opt" data-q="dome" data-v="no" onclick="setCheckin('dome','no')">No</button>
+      </div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-label">Any pain — pelvic, abdominal, low back, or joint?</div>
+      <div class="yn-row">
+        <button class="yn-opt" data-q="pain" data-v="yes" onclick="setCheckin('pain','yes')">Yes</button>
+        <button class="yn-opt" data-q="pain" data-v="no" onclick="setCheckin('pain','no')">No</button>
+      </div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-label">Feeling ready for more load/intensity?</div>
+      <div class="yn-row">
+        <button class="yn-opt" data-q="ready" data-v="yes" onclick="setCheckin('ready','yes')">Yes</button>
+        <button class="yn-opt" data-q="ready" data-v="no" onclick="setCheckin('ready','no')">Not yet</button>
+      </div>
+    </div>
+    <div id="checkinResult"></div>
+    <button class="btn-primary" id="checkinSaveBtn" onclick="submitCheckin()" disabled>Submit check-in</button>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="nav-btn" onclick="showScreen('program')"><div class="nav-icon on" id="ni-program"></div><span class="nav-lbl on" id="nl-program">Program</span></button>
+  <button class="nav-btn" onclick="showScreen('activity')"><div class="nav-icon" id="ni-activity"></div><span class="nav-lbl" id="nl-activity">Activity</span></button>
+  <button class="nav-btn" onclick="showScreen('settings')"><div class="nav-icon" id="ni-settings"></div><span class="nav-lbl" id="nl-settings">Settings</span></button>
+</div>
+
+<script>
+const DATA_KEY = 'muscle-mommy-v1';
+
+function loadData() {
+  try {
+    const d = JSON.parse(localStorage.getItem(DATA_KEY));
+    if (d) return d;
+  } catch(e) {}
+  return { phase: 1, activity: [], checkins: [], sessionToggle: 'A' };
+}
+function saveData(d) {
+  try { localStorage.setItem(DATA_KEY, JSON.stringify(d)); } catch(e) {}
+}
+let STATE = loadData();
+
+// ── Phase content ──
+const PHASES = {
+  1: {
+    title: 'Core & Pelvic Floor Foundation',
+    blurb: 'Breathing, activation, and control — before anything gets loaded.',
+    sessions: {
+      A: {
+        label: 'Session A · Foundation Breath & Activation',
+        duration: '30–35 min',
+        exercises: [
+          { name: 'Diaphragmatic breathing (supine)', detail: '3 sets × 8 slow breaths — exhale = gentle pelvic floor + TA engagement' },
+          { name: 'Heel slides w/ TA activation', detail: '3 × 8 each side, controlled, no back arching' },
+          { name: 'Dead bug (arms only)', detail: '3 × 6 each side, exhale on the reach' },
+          { name: 'Glute bridge (bodyweight)', detail: '3 × 10, pause at top, no breath holding' },
+          { name: 'Bird dog', detail: '3 × 6 each side, slow and controlled' },
+          { name: 'Side-lying clamshells', detail: '2 × 12 each side' },
+          { name: 'Cat–cow mobility flow', detail: '2 minutes, easy pace' },
+        ],
+      },
+      B: {
+        label: 'Session B · Stability & Light Load',
+        duration: '30–40 min',
+        exercises: [
+          { name: 'Diaphragmatic breathing (360° cues)', detail: '3 × 8 breaths, feel ribs expand in all directions' },
+          { name: 'Dead bug (full extension)', detail: '3 × 6 each side, slow tempo, exhale on extension' },
+          { name: 'Glute bridge march', detail: '3 × 8 each side' },
+          { name: 'Standing pallof press (light band)', detail: '3 × 8 each side, resist rotation' },
+          { name: 'Wall sit', detail: '2 × 20–30 sec, pain-free range only' },
+          { name: 'Seated marching w/ band', detail: '2 × 10 each side' },
+          { name: "Child's pose + hip flexor stretch", detail: '2 minutes' },
+        ],
+      },
+    },
+  },
+  2: {
+    title: 'Pilates–Strength Blend',
+    blurb: 'Pilates-style control stays the base, with light-to-moderate resistance layered in.',
+    locked: true,
+    preview: ['Full-body Pilates-based sessions', 'Light dumbbell/machine work added in', 'Still no high-impact or plyometric work', 'Unlocks once Phase 1 check-in clears'],
+  },
+  3: {
+    title: 'Strength for Fat Loss & Toning',
+    blurb: 'Traditional strength structure — progressive overload, moderate-rep hypertrophy work.',
+    locked: true,
+    preview: ['Push/pull/legs or upper/lower split', 'Progressive overload each week', 'Gymnastics-era control & bracing patterns return', 'Unlocks once Phase 2 check-in clears'],
+  },
+};
+
+// ── Navigation ──
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  ['program','activity','settings'].forEach(n => {
+    document.getElementById('ni-' + n).classList.toggle('on', n === name);
+    document.getElementById('nl-' + n).classList.toggle('on', n === name);
+  });
+  document.getElementById('fabWrap').classList.toggle('show', name === 'activity');
+  if (name === 'activity') renderActivity();
+  if (name === 'settings') renderSettings();
+}
+
+// ── Program rendering ──
+function renderProgram() {
+  const phase = STATE.phase;
+  document.getElementById('headerSub').textContent = `Phase ${phase} · ${PHASES[phase].title}`;
+  const el = document.getElementById('programContent');
+  let html = '';
+
+  html += `<div class="card">
+    <div class="card-title">Phase ${phase} of 3 · ${PHASES[phase].title}</div>
+    <div class="card-sub">${PHASES[phase].blurb}</div>
+    <div class="phase-dots">
+      ${[1,2,3].map(p => `<div class="phase-dot ${p < phase ? 'done' : (p === phase ? 'active' : '')}"></div>`).join('')}
+    </div>
+  </div>`;
+
+  const ph = PHASES[phase];
+  if (!ph.locked) {
+    const sessKey = STATE.sessionToggle || 'A';
+    const sess = ph.sessions[sessKey];
+    html += `<div class="chip-row">
+      <button class="chip ${sessKey==='A'?'active':''}" onclick="switchSession('A')">Session A</button>
+      <button class="chip ${sessKey==='B'?'active':''}" onclick="switchSession('B')">Session B</button>
+    </div>`;
+    html += `<div class="card">
+      <div class="card-title">${sess.label}</div>
+      <div class="card-sub">${sess.duration}</div>
+      <div style="margin-top:10px">
+        ${sess.exercises.map((ex,i) => `
+          <div class="ex-row">
+            <div class="ex-check" id="exchk-${phase}-${sessKey}-${i}" onclick="toggleEx(${phase},'${sessKey}',${i})"></div>
+            <div>
+              <div class="ex-name">${ex.name}</div>
+              <div class="ex-detail">${ex.detail}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+      <button class="btn-primary" onclick="markSessionComplete('${sessKey}')">Mark session complete</button>
+    </div>`;
+
+    html += `<div class="callout c-accent">Feeling ready for more? Run a check-in before moving to Phase ${phase+1} — don't advance on a timer.</div>
+    <button class="btn-secondary" onclick="openCheckin()">Start check-in</button>`;
+  }
+
+  // Preview cards for locked phases beyond current
+  [2,3].forEach(p => {
+    if (p <= phase) return;
+    html += `<div class="card locked-card" style="margin-top:16px">
+      <div class="card-title"><span class="lock-icon">🔒</span> Phase ${p} · ${PHASES[p].title}</div>
+      <div class="card-sub">${PHASES[p].blurb}</div>
+      <div style="margin-top:8px">
+        ${PHASES[p].preview.map(x => `<div class="set-row"><div class="set-row-label">• ${x}</div></div>`).join('')}
+      </div>
+    </div>`;
+  });
+
+  el.innerHTML = html + '<div class="spacer"></div>';
+  restoreExChecks();
+}
+function switchSession(key) {
+  STATE.sessionToggle = key;
+  saveData(STATE);
+  renderProgram();
+}
+function toggleEx(phase, sessKey, i) {
+  const id = `exchk-${phase}-${sessKey}-${i}`;
+  const el = document.getElementById(id);
+  el.classList.toggle('checked');
+  if (!STATE.exChecks) STATE.exChecks = {};
+  STATE.exChecks[id] = el.classList.contains('checked');
+  saveData(STATE);
+}
+function restoreExChecks() {
+  if (!STATE.exChecks) return;
+  Object.keys(STATE.exChecks).forEach(id => {
+    const el = document.getElementById(id);
+    if (el && STATE.exChecks[id]) el.classList.add('checked');
+  });
+}
+function markSessionComplete(sessKey) {
+  const phase = STATE.phase;
+  const sess = PHASES[phase].sessions[sessKey];
+  STATE.activity.push({
+    kind: 'structured',
+    date: new Date().toISOString(),
+    phase, sessionLabel: sess.label,
+  });
+  // clear checks for this session so it's fresh next time
+  if (STATE.exChecks) {
+    Object.keys(STATE.exChecks).forEach(id => { if (id.startsWith(`exchk-${phase}-${sessKey}-`)) delete STATE.exChecks[id]; });
+  }
+  // toggle to the other session for variety next time
+  STATE.sessionToggle = sessKey === 'A' ? 'B' : 'A';
+  saveData(STATE);
+  renderProgram();
+}
+
+// ── Check-in ──
+let checkinState = {};
+function openCheckin() {
+  checkinState = {};
+  document.querySelectorAll('.yn-opt').forEach(b => b.classList.remove('selected-yes','selected-no'));
+  document.getElementById('checkinResult').innerHTML = '';
+  document.getElementById('checkinSaveBtn').disabled = true;
+  document.getElementById('checkinModal').classList.add('visible');
+}
+function closeCheckin(e) {
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('checkinModal').classList.remove('visible');
+}
+function setCheckin(q, v) {
+  checkinState[q] = v;
+  document.querySelectorAll(`.yn-opt[data-q="${q}"]`).forEach(b => {
+    b.classList.remove('selected-yes','selected-no');
+    if (b.dataset.v === v) b.classList.add(v === 'yes' ? 'selected-yes' : 'selected-no');
+  });
+  const answered = ['leak','dome','pain','ready'].every(k => checkinState[k]);
+  document.getElementById('checkinSaveBtn').disabled = !answered;
+}
+function submitCheckin() {
+  const redFlag = checkinState.leak === 'yes' || checkinState.dome === 'yes' || checkinState.pain === 'yes';
+  const clears = !redFlag && checkinState.ready === 'yes';
+  const resultEl = document.getElementById('checkinResult');
+  STATE.checkins.push({ date: new Date().toISOString(), phase: STATE.phase, ...checkinState, cleared: clears });
+
+  if (clears && STATE.phase < 3) {
+    STATE.phase += 1;
+    resultEl.innerHTML = `<div class="callout c-green">Cleared — moving to Phase ${STATE.phase}: ${PHASES[STATE.phase].title}.</div>`;
+  } else if (redFlag) {
+    resultEl.innerHTML = `<div class="callout c-red" style="background:var(--red-bg);color:var(--red)">Staying in the current phase. Any leaking, doming, or pain is worth mentioning to your OB or a pelvic floor PT — no need to push through it.</div>`;
+  } else {
+    resultEl.innerHTML = `<div class="callout c-amber">All clear on symptoms — staying in the current phase until it feels ready to progress. No rush.</div>`;
+  }
+  saveData(STATE);
+  document.getElementById('checkinSaveBtn').disabled = true;
+  setTimeout(() => { closeCheckin(); renderProgram(); }, 1400);
+}
+
+// ── Manual phase override (Settings) ──
+function manualSetPhase(p) {
+  STATE.phase = p;
+  saveData(STATE);
+  renderSettings();
+  renderProgram();
+}
+
+// ── Unstructured activity logger ──
+let logState = { type: null, duration: null, feel: null, notes: '' };
+function openActivityLogger() {
+  logState = { type: null, duration: null, feel: null, notes: '' };
+  document.querySelectorAll('.m-chip').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.feel-opt').forEach(c => c.classList.remove('selected'));
+  document.getElementById('logDuration').value = '';
+  document.getElementById('logNotes').value = '';
+  const now = new Date();
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('logModalDate').textContent = `Today — ${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}`;
+  document.getElementById('logModal').classList.add('visible');
+  updateLogSaveBtn();
+}
+function closeActivityLogger(e) {
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('logModal').classList.remove('visible');
+}
+function setLogType(t) {
+  logState.type = t;
+  document.querySelectorAll('.m-chip').forEach(c => c.classList.toggle('selected', c.dataset.type === t));
+  updateLogSaveBtn();
+}
+function setLogFeel(f) {
+  logState.feel = f;
+  document.querySelectorAll('.feel-opt').forEach(c => c.classList.toggle('selected', c.dataset.feel === f));
+  updateLogSaveBtn();
+}
+function updateLogSaveBtn() {
+  document.getElementById('logSaveBtn').disabled = !(logState.type && logState.feel);
+}
+function saveActivityLog() {
+  logState.duration = document.getElementById('logDuration').value.trim();
+  logState.notes = document.getElementById('logNotes').value.trim();
+  STATE.activity.push({
+    kind: 'unstructured',
+    date: new Date().toISOString(),
+    type: logState.type,
+    duration: logState.duration,
+    feel: logState.feel,
+    notes: logState.notes,
+  });
+  saveData(STATE);
+  closeActivityLogger();
+  renderActivity();
+}
+
+// ── Activity feed ──
+const TYPE_ICON = { Walk: '🚶', Pilates: '🧘', Yoga: '🧘\u200d♀️', Class: '🏋️\u200d♀️' };
+function getWeekStart(d) {
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  const monday = new Date(d);
+  monday.setDate(d.getDate() + diff);
+  monday.setHours(0,0,0,0);
+  return monday;
+}
+function weekGroupLabel(weekStart, now) {
+  const today = getWeekStart(now);
+  const diff = Math.round((today - weekStart) / (7 * 86400000));
+  if (diff === 0) return 'This Week';
+  if (diff === 1) return 'Last Week';
+  return `${diff} weeks ago`;
+}
+function formatActivityDate(d) {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  return `${days[d.getDay()]} ${months[d.getMonth()]} ${d.getDate()}`;
+}
+function renderActivity() {
+  const el = document.getElementById('activity-content');
+  const all = (STATE.activity || []).map(e => ({ ...e, dateObj: new Date(e.date) })).sort((a,b) => b.dateObj - a.dateObj);
+  if (!all.length) {
+    el.innerHTML = '<div class="empty-state">No activity logged yet.<br>Complete a session or tap + to log a walk, class, or Pilates/yoga.</div>';
+    return;
+  }
+  const now = new Date();
+  const groups = {};
+  all.forEach(entry => {
+    const ws = getWeekStart(entry.dateObj);
+    const key = ws.toISOString();
+    if (!groups[key]) groups[key] = { weekStart: ws, entries: [] };
+    groups[key].entries.push(entry);
+  });
+  const sortedGroups = Object.values(groups).sort((a,b) => b.weekStart - a.weekStart);
+  let html = '';
+  sortedGroups.forEach(g => {
+    html += `<div class="activity-group-label">${weekGroupLabel(g.weekStart, now)}</div>`;
+    g.entries.forEach(entry => {
+      if (entry.kind === 'structured') {
+        html += `<div class="activity-row">
+          <div class="activity-icon">💪</div>
+          <div class="activity-body">
+            <div class="activity-headline">${entry.sessionLabel}</div>
+            <div class="activity-sub">${formatActivityDate(entry.dateObj)} · Phase ${entry.phase}</div>
+          </div>
+        </div>`;
+      } else {
+        const feltIcon = entry.feel === 'good' ? '👍' : (entry.feel === 'rough' ? '👎' : '');
+        const durTxt = entry.duration ? ` · ${entry.duration} min` : '';
+        const notesLine = entry.notes ? `<div class="activity-notes">"${entry.notes}"</div>` : '';
+        html += `<div class="activity-row">
+          <div class="activity-icon">${TYPE_ICON[entry.type] || '🏃'}</div>
+          <div class="activity-body">
+            <div class="activity-headline">${entry.type}${durTxt} ${feltIcon}</div>
+            <div class="activity-sub">${formatActivityDate(entry.dateObj)}</div>
+            ${notesLine}
+          </div>
+        </div>`;
+      }
+    });
+  });
+  el.innerHTML = html + '<div class="spacer"></div>';
+}
+
+// ── Settings ──
+function renderSettings() {
+  document.getElementById('settingsPhaseSub').textContent = `Phase ${STATE.phase} · ${PHASES[STATE.phase].title}`;
+  document.querySelectorAll('#screen-settings .chip').forEach(c => {
+    c.classList.toggle('active', Number(c.dataset.phase) === STATE.phase);
+  });
+}
+function resetAllData() {
+  if (!confirm('Reset all activity, check-ins, and phase progress? This cannot be undone.')) return;
+  STATE = { phase: 1, activity: [], checkins: [], sessionToggle: 'A' };
+  saveData(STATE);
+  renderProgram();
+  renderActivity();
+  renderSettings();
+}
+
+// ── Theme ──
+const THEME_KEY = 'muscle-mommy-theme-v1';
+function getStoredTheme() { try { return localStorage.getItem(THEME_KEY) || 'auto'; } catch(e) { return 'auto'; } }
+function applyTheme(theme) {
+  if (theme === 'auto') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', theme);
+  document.querySelectorAll('.theme-opt').forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
+}
+function setTheme(theme) {
+  try { localStorage.setItem(THEME_KEY, theme); } catch(e) {}
+  applyTheme(theme);
+}
+
+// ── Init ──
+applyTheme(getStoredTheme());
+renderProgram();
+renderSettings();
+</script>
+</body>
+</html>
