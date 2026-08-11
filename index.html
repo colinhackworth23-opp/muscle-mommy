@@ -293,6 +293,21 @@ input, textarea, select { font-size: 16px; font-family: inherit; }
   background: #e08bad; color: #2a1520;
   font-size: 15px; font-weight: 800;
 }
+
+/* Delete affordance on activity rows */
+.activity-row { position: relative; align-items: center; }
+.activity-body { flex: 1; min-width: 0; }
+.activity-del {
+  background: none; border: none; color: var(--ink-4);
+  font-size: 20px; line-height: 1; padding: 8px 4px;
+  flex-shrink: 0; min-width: 32px; min-height: 32px;
+}
+
+/* Reduced motion — respect the system setting */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001s !important; transition-duration: 0.001s !important; }
+  .celebrate-confetti, .phase-confetti { display: none !important; }
+}
 </style>
 </head>
 <body>
@@ -369,6 +384,13 @@ input, textarea, select { font-size: 16px; font-family: inherit; }
       </div>
     </div>
     <div class="modal-section">
+      <div class="modal-label">When?</div>
+      <div class="yn-row">
+        <button class="yn-opt selected-no" data-lwhen="today" onclick="setLogWhen('today')">Today</button>
+        <button class="yn-opt" data-lwhen="yesterday" onclick="setLogWhen('yesterday')">Yesterday</button>
+      </div>
+    </div>
+    <div class="modal-section">
       <div class="modal-label">Duration</div>
       <input class="m-input" id="logDuration" type="number" inputmode="numeric" placeholder="Minutes">
     </div>
@@ -431,6 +453,42 @@ input, textarea, select { font-size: 16px; font-family: inherit; }
     </div>
     <div id="checkinResult"></div>
     <button class="btn-primary" id="checkinSaveBtn" onclick="submitCheckin()" disabled>Submit check-in</button>
+  </div>
+</div>
+
+<!-- SESSION COMPLETE MODAL -->
+<div class="modal" id="sessionModal" onclick="closeSessionModal(event)">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Session Complete</div>
+        <div class="modal-sub" id="sessionModalSub"></div>
+      </div>
+      <button class="modal-close" onclick="closeSessionModal()">&times;</button>
+    </div>
+    <div class="modal-section">
+      <div class="modal-label">When?</div>
+      <div class="yn-row">
+        <button class="yn-opt selected-no" data-when="today" onclick="setSessionWhen('today')">Today</button>
+        <button class="yn-opt" data-when="yesterday" onclick="setSessionWhen('yesterday')">Yesterday</button>
+      </div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-label">How'd it feel?</div>
+      <div class="feel-grid">
+        <button class="feel-opt" data-sfeel="good" onclick="setSessionFeel('good')">
+          <div class="feel-emoji">👍</div><div class="feel-lbl">Good</div>
+        </button>
+        <button class="feel-opt" data-sfeel="rough" onclick="setSessionFeel('rough')">
+          <div class="feel-emoji">👎</div><div class="feel-lbl">Rough</div>
+        </button>
+      </div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-label">Notes <span class="modal-optional">optional</span></div>
+      <textarea class="m-textarea" id="sessionNotes" rows="3" placeholder="Anything that felt off, or went well?"></textarea>
+    </div>
+    <button class="btn-primary" id="sessionSaveBtn" onclick="confirmSessionComplete()" disabled>Log it</button>
   </div>
 </div>
 
@@ -617,6 +675,7 @@ const PHASES = {
 
 // ── Navigation ──
 function showScreen(name) {
+  document.querySelectorAll('.modal').forEach(m => m.classList.remove('visible'));
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
   ['program','activity','settings'].forEach(n => {
@@ -707,25 +766,71 @@ function restoreExChecks() {
     if (el && STATE.exChecks[id]) el.classList.add('checked');
   });
 }
+let sessionModalState = { sessKey: null, when: 'today', feel: null };
 function markSessionComplete(sessKey) {
+  const sess = PHASES[STATE.phase].sessions[sessKey];
+  sessionModalState = { sessKey, when: 'today', feel: null };
+  document.getElementById('sessionModalSub').textContent = sess.label;
+  document.getElementById('sessionNotes').value = '';
+  document.querySelectorAll('[data-when]').forEach(b => b.classList.toggle('selected-no', b.dataset.when === 'today'));
+  document.querySelectorAll('[data-sfeel]').forEach(b => b.classList.remove('selected'));
+  document.getElementById('sessionSaveBtn').disabled = true;
+  document.getElementById('sessionModal').classList.add('visible');
+}
+function closeSessionModal(e) {
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('sessionModal').classList.remove('visible');
+}
+function setSessionWhen(w) {
+  sessionModalState.when = w;
+  document.querySelectorAll('[data-when]').forEach(b => b.classList.toggle('selected-no', b.dataset.when === w));
+  haptic(6);
+}
+function setSessionFeel(f) {
+  sessionModalState.feel = f;
+  document.querySelectorAll('[data-sfeel]').forEach(b => b.classList.toggle('selected', b.dataset.sfeel === f));
+  document.getElementById('sessionSaveBtn').disabled = false;
+  haptic(6);
+}
+
+let sessionSaving = false;
+function confirmSessionComplete() {
+  if (sessionSaving) return;           // guard against double-tap
+  sessionSaving = true;
+  const btn = document.getElementById('sessionSaveBtn');
+  btn.disabled = true;
+
   const phase = STATE.phase;
+  const sessKey = sessionModalState.sessKey;
   const sess = PHASES[phase].sessions[sessKey];
-  const nowIso = new Date().toISOString();
+  const when = new Date();
+  if (sessionModalState.when === 'yesterday') when.setDate(when.getDate() - 1);
+  const iso = when.toISOString();
+  const notes = document.getElementById('sessionNotes').value.trim();
+  const entryId = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
+
   STATE.activity.push({
     kind: 'structured',
-    date: nowIso,
-    phase, sessionLabel: sess.label,
+    id: entryId,
+    date: iso,
+    phase,
+    sessionLabel: sess.label,
+    feel: sessionModalState.feel,
+    notes,
   });
-  enqueue('Activity', [nowIso, 'Structured', sess.label, `Phase ${phase}`, '', '']);
-  // clear checks for this session so it's fresh next time
+  enqueue('Activity', [iso, 'Structured', sess.label, `Phase ${phase}`, sessionModalState.feel || '', notes]);
+
   if (STATE.exChecks) {
     Object.keys(STATE.exChecks).forEach(id => { if (id.startsWith(`exchk-${phase}-${sessKey}-`)) delete STATE.exChecks[id]; });
   }
-  // toggle to the other session for variety next time
   STATE.sessionToggle = sessKey === 'A' ? 'B' : 'A';
   saveData(STATE);
+
+  closeSessionModal();
   renderProgram();
   celebrateSession();
+  sessionSaving = false;
+  btn.disabled = false;
 }
 
 // ── Celebration ──
@@ -808,8 +913,10 @@ function dismissCelebrate() {
 }
 
 // Confetti
+const REDUCED_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 let confettiRaf = null, confettiParts = [];
 function startConfetti(count, canvasId = 'celebrateConfetti', intense = false) {
+  if (REDUCED_MOTION) return;          // honor system motion preference
   const canvas = document.getElementById(canvasId);
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
@@ -945,6 +1052,12 @@ function submitCheckin() {
 
 // ── Manual phase override (Settings) ──
 function manualSetPhase(p) {
+  if (p === STATE.phase) return;
+  if (p > STATE.phase) {
+    const msg = 'Skipping ahead bypasses the check-in that confirms no leaking, doming, or pain. '
+      + 'That gate exists for a reason — advancing early is how postpartum injuries happen.\n\nSkip it anyway?';
+    if (!confirm(msg)) { renderSettings(); return; }
+  }
   STATE.phase = p;
   saveData(STATE);
   renderSettings();
@@ -952,11 +1065,17 @@ function manualSetPhase(p) {
 }
 
 // ── Unstructured activity logger ──
-let logState = { type: null, duration: null, feel: null, notes: '' };
+let logState = { type: null, duration: null, feel: null, notes: '', when: 'today' };
+function setLogWhen(w) {
+  logState.when = w;
+  document.querySelectorAll('[data-lwhen]').forEach(b => b.classList.toggle('selected-no', b.dataset.lwhen === w));
+  haptic(6);
+}
 function openActivityLogger() {
-  logState = { type: null, duration: null, feel: null, notes: '' };
+  logState = { type: null, duration: null, feel: null, notes: '', when: 'today' };
   document.querySelectorAll('.m-chip').forEach(c => c.classList.remove('selected'));
   document.querySelectorAll('.feel-opt').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('[data-lwhen]').forEach(b => b.classList.toggle('selected-no', b.dataset.lwhen === 'today'));
   document.getElementById('logDuration').value = '';
   document.getElementById('logNotes').value = '';
   const now = new Date();
@@ -983,26 +1102,39 @@ function setLogFeel(f) {
 function updateLogSaveBtn() {
   document.getElementById('logSaveBtn').disabled = !(logState.type && logState.feel);
 }
+let logSaving = false;
 function saveActivityLog() {
+  if (logSaving) return;               // guard against double-tap
+  logSaving = true;
   logState.duration = document.getElementById('logDuration').value.trim();
   logState.notes = document.getElementById('logNotes').value.trim();
-  const nowIso = new Date().toISOString();
+  const when = new Date();
+  if (logState.when === 'yesterday') when.setDate(when.getDate() - 1);
+  const iso = when.toISOString();
+  const entryId = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
   STATE.activity.push({
     kind: 'unstructured',
-    date: nowIso,
+    id: entryId,
+    date: iso,
     type: logState.type,
     duration: logState.duration,
     feel: logState.feel,
     notes: logState.notes,
   });
-  enqueue('Activity', [nowIso, logState.type, logState.type, logState.duration ? `${logState.duration} min` : '', logState.feel, logState.notes]);
+  enqueue('Activity', [iso, logState.type, logState.type, logState.duration ? `${logState.duration} min` : '', logState.feel, logState.notes]);
   saveData(STATE);
   closeActivityLogger();
   renderActivity();
+  logSaving = false;
 }
 
 // ── Activity feed ──
 const TYPE_ICON = { Walk: '🚶', Pilates: '🧘', Yoga: '🧘\u200d♀️', Class: '🏋️\u200d♀️' };
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 function getWeekStart(d) {
   const day = d.getDay();
   const diff = day === 0 ? -6 : 1 - day;
@@ -1043,30 +1175,44 @@ function renderActivity() {
   sortedGroups.forEach(g => {
     html += `<div class="activity-group-label">${weekGroupLabel(g.weekStart, now)}</div>`;
     g.entries.forEach(entry => {
+      const del = `<button class="activity-del" onclick="deleteActivity('${esc(entry.id || entry.date)}')" aria-label="Delete entry">&times;</button>`;
       if (entry.kind === 'structured') {
+        const feltIcon = entry.feel === 'good' ? '👍' : (entry.feel === 'rough' ? '👎' : '');
+        const notesLine = entry.notes ? `<div class="activity-notes">"${esc(entry.notes)}"</div>` : '';
         html += `<div class="activity-row">
           <div class="activity-icon">💪</div>
           <div class="activity-body">
-            <div class="activity-headline">${entry.sessionLabel}</div>
-            <div class="activity-sub">${formatActivityDate(entry.dateObj)} · Phase ${entry.phase}</div>
+            <div class="activity-headline">${esc(entry.sessionLabel)} ${feltIcon}</div>
+            <div class="activity-sub">${formatActivityDate(entry.dateObj)} · Phase ${esc(entry.phase)}</div>
+            ${notesLine}
           </div>
+          ${del}
         </div>`;
       } else {
         const feltIcon = entry.feel === 'good' ? '👍' : (entry.feel === 'rough' ? '👎' : '');
-        const durTxt = entry.duration ? ` · ${entry.duration} min` : '';
-        const notesLine = entry.notes ? `<div class="activity-notes">"${entry.notes}"</div>` : '';
+        const durTxt = entry.duration ? ` · ${esc(entry.duration)} min` : '';
+        const notesLine = entry.notes ? `<div class="activity-notes">"${esc(entry.notes)}"</div>` : '';
         html += `<div class="activity-row">
           <div class="activity-icon">${TYPE_ICON[entry.type] || '🏃'}</div>
           <div class="activity-body">
-            <div class="activity-headline">${entry.type}${durTxt} ${feltIcon}</div>
+            <div class="activity-headline">${esc(entry.type)}${durTxt} ${feltIcon}</div>
             <div class="activity-sub">${formatActivityDate(entry.dateObj)}</div>
             ${notesLine}
           </div>
+          ${del}
         </div>`;
       }
     });
   });
   el.innerHTML = html + '<div class="spacer"></div>';
+}
+
+function deleteActivity(id) {
+  if (!confirm('Delete this entry? This only removes it from the app — the backup copy in your sheet stays.')) return;
+  STATE.activity = (STATE.activity || []).filter(a => (a.id || a.date) !== id);
+  saveData(STATE);
+  renderActivity();
+  renderProgram();
 }
 
 // ── Settings ──
