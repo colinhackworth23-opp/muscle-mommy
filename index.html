@@ -193,9 +193,20 @@ input, textarea, select { font-size: 16px; font-family: inherit; }
 .theme-opt.active { background: var(--accent); color: #fff; }
 .set-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
 .set-row-label { font-size: 13px; color: var(--ink-2); }
+
+.sync-pill {
+  position: fixed; top: calc(env(safe-area-inset-top) + 10px); left: 50%; transform: translateX(-50%);
+  background: var(--bg-2); color: var(--ink-2); font-size: 11px; font-weight: 700;
+  padding: 5px 12px; border-radius: 20px; z-index: 25; opacity: 0; pointer-events: none;
+  transition: opacity 0.25s;
+}
+.sync-pill.show { opacity: 1; }
+.sync-pill.pending { background: var(--amber-bg); color: var(--amber); }
 </style>
 </head>
 <body>
+
+<div class="sync-pill" id="syncPill">Synced</div>
 
 <div class="header">
   <div class="h-title" id="headerTitle">Muscle Mommy</div>
@@ -341,6 +352,75 @@ input, textarea, select { font-size: 16px; font-family: inherit; }
 
 <script>
 const DATA_KEY = 'muscle-mommy-v1';
+
+// ── Google Sheets backup sync (Activity log only — check-ins stay local) ──
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxj8zPD3xem7XeZb4ABCuyOmQm-MW2llWkA8zuTIaXsWHOJruIZqgEVy9gvgufEnG2gVw/exec';
+const SHARED_KEY = 'jeD7YkVeOry3qLs2DFGobKQXvaQmo0Uh';
+const SYNC_KEY = 'muscle-mommy-sync-queue-v1';
+
+function getQueue() {
+  try { return JSON.parse(localStorage.getItem(SYNC_KEY)) || []; } catch(e) { return []; }
+}
+function setQueue(q) {
+  try { localStorage.setItem(SYNC_KEY, JSON.stringify(q)); } catch(e) {}
+}
+function enqueue(tab, row) {
+  const queue = getQueue();
+  queue.push({ id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()), tab, row, tries: 0 });
+  setQueue(queue);
+  scheduleDrain();
+  updateSyncPill();
+}
+let draining = false;
+function scheduleDrain(delay = 0) {
+  if (draining) return;
+  setTimeout(drain, delay);
+}
+async function drain() {
+  if (draining) return;
+  if (!navigator.onLine) { updateSyncPill(); return; }
+  draining = true;
+  try {
+    let queue = getQueue();
+    while (queue.length > 0) {
+      const item = queue[0];
+      try {
+        await fetch(SHEET_URL, {
+          method: 'POST', mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tab: item.tab, row: item.row, id: item.id, key: SHARED_KEY }),
+        });
+        queue.shift();
+        setQueue(queue);
+      } catch (err) {
+        item.tries++;
+        setQueue(queue);
+        const backoff = Math.min(30000, 1000 * Math.pow(2, item.tries));
+        draining = false;
+        updateSyncPill();
+        scheduleDrain(backoff);
+        return;
+      }
+    }
+  } finally {
+    draining = false;
+    updateSyncPill();
+  }
+}
+function updateSyncPill() {
+  const pill = document.getElementById('syncPill');
+  if (!pill) return;
+  const queue = getQueue();
+  if (queue.length === 0) {
+    pill.textContent = 'Synced';
+    pill.className = 'sync-pill show';
+    setTimeout(() => pill.classList.remove('show'), 1500);
+  } else {
+    pill.textContent = `${queue.length} pending`;
+    pill.className = 'sync-pill show pending';
+  }
+}
+window.addEventListener('online', () => scheduleDrain());
 
 function loadData() {
   try {
@@ -496,11 +576,13 @@ function restoreExChecks() {
 function markSessionComplete(sessKey) {
   const phase = STATE.phase;
   const sess = PHASES[phase].sessions[sessKey];
+  const nowIso = new Date().toISOString();
   STATE.activity.push({
     kind: 'structured',
-    date: new Date().toISOString(),
+    date: nowIso,
     phase, sessionLabel: sess.label,
   });
+  enqueue('Activity', [nowIso, 'Structured', sess.label, `Phase ${phase}`, '', '']);
   // clear checks for this session so it's fresh next time
   if (STATE.exChecks) {
     Object.keys(STATE.exChecks).forEach(id => { if (id.startsWith(`exchk-${phase}-${sessKey}-`)) delete STATE.exChecks[id]; });
@@ -595,14 +677,16 @@ function updateLogSaveBtn() {
 function saveActivityLog() {
   logState.duration = document.getElementById('logDuration').value.trim();
   logState.notes = document.getElementById('logNotes').value.trim();
+  const nowIso = new Date().toISOString();
   STATE.activity.push({
     kind: 'unstructured',
-    date: new Date().toISOString(),
+    date: nowIso,
     type: logState.type,
     duration: logState.duration,
     feel: logState.feel,
     notes: logState.notes,
   });
+  enqueue('Activity', [nowIso, logState.type, logState.type, logState.duration ? `${logState.duration} min` : '', logState.feel, logState.notes]);
   saveData(STATE);
   closeActivityLogger();
   renderActivity();
@@ -709,6 +793,8 @@ function setTheme(theme) {
 applyTheme(getStoredTheme());
 renderProgram();
 renderSettings();
+updateSyncPill();
+scheduleDrain(500);
 </script>
 </body>
 </html>
