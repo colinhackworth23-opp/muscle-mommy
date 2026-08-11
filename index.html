@@ -204,6 +204,95 @@ input, textarea, select { font-size: 16px; font-family: inherit; }
 }
 .sync-pill.show { opacity: 1; }
 .sync-pill.pending { background: var(--amber-bg); color: var(--amber); }
+
+/* Celebration overlay */
+.celebrate-overlay {
+  position: fixed; inset: 0; z-index: 40;
+  background: rgba(0,0,0,0.55);
+  display: none; align-items: center; justify-content: center;
+  padding: 30px;
+}
+.celebrate-overlay.visible { display: flex; }
+.celebrate-confetti { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.celebrate-burst { text-align: center; position: relative; z-index: 2; animation: burstIn 0.5s cubic-bezier(0.2,1.3,0.4,1); }
+@keyframes burstIn {
+  0% { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.celebrate-emoji { font-size: 64px; line-height: 1; }
+.celebrate-kicker {
+  font-family: var(--f-num); font-size: 11px; font-weight: 800;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--accent); margin-top: 14px;
+}
+.celebrate-headline { font-size: 26px; font-weight: 800; color: #fff; margin-top: 8px; letter-spacing: -0.02em; line-height: 1.2; }
+.celebrate-count { font-family: var(--f-num); font-size: 13px; color: rgba(255,255,255,0.72); margin-top: 12px; }
+.celebrate-tap { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 26px; text-transform: uppercase; letter-spacing: 0.1em; }
+.celebrate-milestone .celebrate-headline { font-size: 30px; }
+
+/* Phase-clear celebration — bigger, screenshot-worthy */
+.phase-overlay {
+  position: fixed; inset: 0; z-index: 45;
+  background: linear-gradient(160deg, #2a1520 0%, #4a2438 55%, #6b3450 100%);
+  display: none; flex-direction: column; align-items: center; justify-content: center;
+  padding: 40px 28px;
+  text-align: center;
+}
+.phase-overlay.visible { display: flex; }
+.phase-confetti { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.phase-inner { position: relative; z-index: 2; width: 100%; animation: phaseIn 0.7s cubic-bezier(0.2,1.1,0.4,1); }
+@keyframes phaseIn {
+  0% { transform: translateY(24px) scale(0.94); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+.phase-crest {
+  width: 92px; height: 92px; border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  border: 2px solid rgba(224,139,173,0.6);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 44px; margin: 0 auto 22px;
+}
+.phase-kicker {
+  font-family: var(--f-num); font-size: 11px; font-weight: 800;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: #e08bad;
+}
+.phase-headline {
+  font-size: 32px; font-weight: 800; color: #fff;
+  margin-top: 10px; letter-spacing: -0.02em; line-height: 1.15;
+}
+.phase-body {
+  font-size: 14px; color: rgba(255,255,255,0.78);
+  margin-top: 16px; line-height: 1.55; max-width: 300px;
+  margin-left: auto; margin-right: auto;
+}
+.phase-statline {
+  display: flex; justify-content: center; gap: 28px;
+  margin-top: 26px; padding-top: 22px;
+  border-top: 1px solid rgba(255,255,255,0.14);
+}
+.phase-stat-num { font-family: var(--f-num); font-size: 24px; font-weight: 800; color: #fff; }
+.phase-stat-lbl {
+  font-family: var(--f-num); font-size: 9px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: rgba(255,255,255,0.5); margin-top: 4px;
+}
+.phase-next {
+  margin-top: 26px; padding: 14px 16px;
+  background: rgba(255,255,255,0.08); border-radius: 14px;
+  font-size: 13px; color: rgba(255,255,255,0.85); line-height: 1.5;
+}
+.phase-next-lbl {
+  font-family: var(--f-num); font-size: 9px; font-weight: 800;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: #e08bad; margin-bottom: 6px;
+}
+.phase-continue {
+  margin-top: 24px; width: 100%; padding: 15px;
+  border-radius: 12px; border: none;
+  background: #e08bad; color: #2a1520;
+  font-size: 15px; font-weight: 800;
+}
 </style>
 </head>
 <body>
@@ -342,6 +431,48 @@ input, textarea, select { font-size: 16px; font-family: inherit; }
     </div>
     <div id="checkinResult"></div>
     <button class="btn-primary" id="checkinSaveBtn" onclick="submitCheckin()" disabled>Submit check-in</button>
+  </div>
+</div>
+
+<!-- CELEBRATION OVERLAY -->
+<div class="celebrate-overlay" id="celebrateOverlay" onclick="dismissCelebrate()">
+  <canvas class="celebrate-confetti" id="celebrateConfetti"></canvas>
+  <div class="celebrate-burst" id="celebrateBurst">
+    <div class="celebrate-emoji" id="celebrateEmoji">💪</div>
+    <div class="celebrate-kicker" id="celebrateKicker">Session Complete</div>
+    <div class="celebrate-headline" id="celebrateHeadline">Nice work</div>
+    <div class="celebrate-count" id="celebrateCount"></div>
+    <div class="celebrate-tap">tap to continue</div>
+  </div>
+</div>
+
+<!-- PHASE CLEAR CELEBRATION -->
+<div class="phase-overlay" id="phaseOverlay">
+  <canvas class="phase-confetti" id="phaseConfetti"></canvas>
+  <div class="phase-inner">
+    <div class="phase-crest" id="phaseCrest">🌸</div>
+    <div class="phase-kicker" id="phaseKicker">Phase 1 Complete</div>
+    <div class="phase-headline" id="phaseHeadline">Foundation built</div>
+    <div class="phase-body" id="phaseBody"></div>
+    <div class="phase-statline">
+      <div>
+        <div class="phase-stat-num" id="phaseStatSessions">0</div>
+        <div class="phase-stat-lbl">Sessions</div>
+      </div>
+      <div>
+        <div class="phase-stat-num" id="phaseStatDays">0</div>
+        <div class="phase-stat-lbl">Days in</div>
+      </div>
+      <div>
+        <div class="phase-stat-num" id="phaseStatPhase">2</div>
+        <div class="phase-stat-lbl">Next phase</div>
+      </div>
+    </div>
+    <div class="phase-next">
+      <div class="phase-next-lbl">What's next</div>
+      <div id="phaseNextBody"></div>
+    </div>
+    <button class="phase-continue" onclick="dismissPhaseClear()">Let's go</button>
   </div>
 </div>
 
@@ -510,6 +641,7 @@ function renderProgram() {
     <div class="phase-dots">
       ${[1,2,3].map(p => `<div class="phase-dot ${p < phase ? 'done' : (p === phase ? 'active' : '')}"></div>`).join('')}
     </div>
+    <div class="phase-label">${totalSessions()} session${totalSessions() === 1 ? '' : 's'} completed</div>
   </div>`;
 
   const ph = PHASES[phase];
@@ -593,6 +725,176 @@ function markSessionComplete(sessKey) {
   STATE.sessionToggle = sessKey === 'A' ? 'B' : 'A';
   saveData(STATE);
   renderProgram();
+  celebrateSession();
+}
+
+// ── Celebration ──
+const PHASE_MESSAGES = {
+  1: [
+    "That's rebuilding real strength",
+    "Your core thanks you",
+    "Foundation work is the hardest kind",
+    "Quiet work, real progress",
+    "Breath by breath, you're getting it back",
+    "This is how it comes back",
+    "Control before load — you're doing it right",
+  ],
+  2: [
+    "Strength and control together",
+    "Your body remembers this",
+    "That's the gymnast showing up",
+    "Load handled, form held",
+    "Building on solid ground",
+    "You're moving well",
+  ],
+  3: [
+    "That's a real training session",
+    "Strong work today",
+    "Progressive overload, earned",
+    "The athlete is back",
+    "That's how it's done",
+    "You showed up and did the work",
+  ],
+};
+const MILESTONES = {
+  5:  { emoji: '🌱', headline: '5 sessions in' },
+  10: { emoji: '⭐', headline: '10 sessions strong' },
+  25: { emoji: '🔥', headline: '25 sessions' },
+  50: { emoji: '🏆', headline: '50 sessions' },
+  75: { emoji: '👑', headline: '75 sessions' },
+  100:{ emoji: '💎', headline: '100 sessions' },
+};
+
+function totalSessions() {
+  return (STATE.activity || []).filter(a => a.kind === 'structured').length;
+}
+function pickMessage(phase) {
+  const pool = PHASE_MESSAGES[phase] || PHASE_MESSAGES[1];
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+function haptic(ms) {
+  if (navigator.vibrate) { try { navigator.vibrate(ms); } catch(e) {} }
+}
+
+function celebrateSession() {
+  const count = totalSessions();
+  const milestone = MILESTONES[count];
+  const overlay = document.getElementById('celebrateOverlay');
+  const burst = document.getElementById('celebrateBurst');
+
+  if (milestone) {
+    document.getElementById('celebrateEmoji').textContent = milestone.emoji;
+    document.getElementById('celebrateKicker').textContent = 'Milestone';
+    document.getElementById('celebrateHeadline').textContent = milestone.headline;
+    burst.classList.add('celebrate-milestone');
+  } else {
+    document.getElementById('celebrateEmoji').textContent = '💪';
+    document.getElementById('celebrateKicker').textContent = 'Session Complete';
+    document.getElementById('celebrateHeadline').textContent = pickMessage(STATE.phase);
+    burst.classList.remove('celebrate-milestone');
+  }
+  // Cumulative count only — never gaps, never streaks
+  document.getElementById('celebrateCount').textContent =
+    count === 1 ? 'First session logged' : `${count} sessions since starting`;
+
+  overlay.classList.add('visible');
+  haptic(milestone ? [12,60,12,60,20] : 12);
+  startConfetti(milestone ? 130 : 70);
+}
+
+function dismissCelebrate() {
+  document.getElementById('celebrateOverlay').classList.remove('visible');
+  stopConfetti('celebrateConfetti');
+}
+
+// Confetti
+let confettiRaf = null, confettiParts = [];
+function startConfetti(count, canvasId = 'celebrateConfetti', intense = false) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = canvas.offsetWidth * dpr;
+  canvas.height = canvas.offsetHeight * dpr;
+  ctx.scale(dpr, dpr);
+  const W = canvas.offsetWidth, H = canvas.offsetHeight;
+  const colors = intense
+    ? ['#e08bad','#f4e3ea','#ffffff','#ffd9e6','#c97a99']
+    : ['#a24f74','#e08bad','#f4e3ea','#c97a99','#ffffff'];
+  confettiParts = Array.from({length: count}, () => ({
+    x: Math.random() * W,
+    y: -20 - Math.random() * H * (intense ? 0.9 : 0.5),
+    w: 5 + Math.random() * 6,
+    h: 8 + Math.random() * 8,
+    vy: 1.6 + Math.random() * (intense ? 3.2 : 2.6),
+    vx: -0.9 + Math.random() * 1.8,
+    rot: Math.random() * Math.PI,
+    vr: -0.08 + Math.random() * 0.16,
+    color: colors[Math.floor(Math.random() * colors.length)],
+  }));
+  cancelAnimationFrame(confettiRaf);
+  (function frame() {
+    ctx.clearRect(0, 0, W, H);
+    confettiParts.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+    });
+    confettiParts = confettiParts.filter(p => p.y < H + 30);
+    if (confettiParts.length) confettiRaf = requestAnimationFrame(frame);
+  })();
+}
+function stopConfetti(canvasId = 'celebrateConfetti') {
+  cancelAnimationFrame(confettiRaf);
+  confettiParts = [];
+  const canvas = document.getElementById(canvasId);
+  if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// ── Phase clear celebration ──
+const PHASE_CLEAR = {
+  1: {
+    crest: '🌸',
+    headline: 'Foundation built',
+    body: "You rebuilt the deepest layer first — breath, core, pelvic floor — and cleared it clean. No leaking, no doming, no pain. That's the part most people skip, and it's the reason everything after this holds up.",
+    next: 'Phase 2 brings Pilates-style control together with real resistance work. Load comes back — carefully, and on top of a foundation you actually built.',
+  },
+  2: {
+    crest: '🔥',
+    headline: 'Control earned',
+    body: "You held form under load and your body stayed quiet through it. Strength, stability, and the body awareness you've had since your gymnastics days are all back online together.",
+    next: 'Phase 3 is real strength programming — progressive overload, structured splits, and the training you actually know how to do. Time to build.',
+  },
+};
+
+function showPhaseClear(clearedPhase) {
+  const cfg = PHASE_CLEAR[clearedPhase];
+  if (!cfg) return;
+  const first = STATE.activity && STATE.activity.length
+    ? new Date(STATE.activity.map(a => a.date).sort()[0])
+    : new Date();
+  const daysIn = Math.max(1, Math.round((Date.now() - first.getTime()) / 86400000));
+
+  document.getElementById('phaseCrest').textContent = cfg.crest;
+  document.getElementById('phaseKicker').textContent = `Phase ${clearedPhase} Complete`;
+  document.getElementById('phaseHeadline').textContent = cfg.headline;
+  document.getElementById('phaseBody').textContent = cfg.body;
+  document.getElementById('phaseNextBody').textContent = cfg.next;
+  document.getElementById('phaseStatSessions').textContent = totalSessions();
+  document.getElementById('phaseStatDays').textContent = daysIn;
+  document.getElementById('phaseStatPhase').textContent = clearedPhase + 1;
+
+  document.getElementById('phaseOverlay').classList.add('visible');
+  haptic([15,70,15,70,15,70,30]);
+  startConfetti(180, 'phaseConfetti', true);
+}
+function dismissPhaseClear() {
+  document.getElementById('phaseOverlay').classList.remove('visible');
+  stopConfetti('phaseConfetti');
+  renderProgram();
 }
 
 // ── Check-in ──
@@ -624,8 +926,13 @@ function submitCheckin() {
   STATE.checkins.push({ date: new Date().toISOString(), phase: STATE.phase, ...checkinState, cleared: clears });
 
   if (clears && STATE.phase < 3) {
+    const clearedPhase = STATE.phase;
     STATE.phase += 1;
-    resultEl.innerHTML = `<div class="callout c-green">Cleared — moving to Phase ${STATE.phase}: ${PHASES[STATE.phase].title}.</div>`;
+    saveData(STATE);
+    document.getElementById('checkinSaveBtn').disabled = true;
+    closeCheckin();
+    setTimeout(() => showPhaseClear(clearedPhase), 250);
+    return;
   } else if (redFlag) {
     resultEl.innerHTML = `<div class="callout c-red" style="background:var(--red-bg);color:var(--red)">Staying in the current phase. Any leaking, doming, or pain is worth mentioning to your OB or a pelvic floor PT — no need to push through it.</div>`;
   } else {
