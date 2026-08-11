@@ -145,9 +145,42 @@ input, textarea, select { font-size: 16px; font-family: inherit; }
 .activity-pain-chip { font-size:11px; background: var(--red-bg); color: var(--red); padding: 3px 8px; border-radius: 20px; }
 
 /* FAB */
-.fab-wrap { position: fixed; right: 20px; bottom: calc(env(safe-area-inset-bottom) + 78px); z-index: 15; display: none; }
-.fab-wrap.show { display: block; }
-.fab { width: 56px; height: 56px; border-radius: 50%; background: var(--accent); border: none; font-size: 24px; color: #fff; box-shadow: 0 6px 18px rgba(0,0,0,0.25); }
+.fab-wrap {
+  position: fixed; right: 20px; bottom: calc(env(safe-area-inset-bottom) + 78px);
+  z-index: 15; display: none;
+  width: 56px; height: 74px;
+  align-items: flex-start; justify-content: center;
+}
+.fab-wrap.show { display: flex; }
+.fab {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--accent); border: none;
+  font-size: 28px; font-weight: 300; line-height: 1; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0;
+  filter: drop-shadow(0 5px 10px rgba(0,0,0,0.28));
+  user-select: none; -webkit-user-select: none;
+  animation: fab-bounce 1.8s ease-in-out infinite;
+  transition: transform 0.15s ease;
+}
+.fab:active { transform: scale(0.92); }
+.fab-shadow {
+  position: absolute; bottom: 2px; left: 50%;
+  width: 44px; height: 8px;
+  background: radial-gradient(ellipse, rgba(0,0,0,0.32), rgba(0,0,0,0));
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translateX(-50%);
+  animation: fab-shadow 1.8s ease-in-out infinite;
+}
+@keyframes fab-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes fab-shadow {
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.4; }
+  50% { transform: translateX(-50%) scale(0.7); opacity: 0.2; }
+}
 
 /* Modal */
 .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 30; display: none; align-items: flex-end; }
@@ -307,6 +340,8 @@ input, textarea, select { font-size: 16px; font-family: inherit; }
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.001s !important; transition-duration: 0.001s !important; }
   .celebrate-confetti, .phase-confetti { display: none !important; }
+  .fab { animation: none !important; }
+  .fab-shadow { animation: none !important; opacity: 0.35 !important; }
 }
 
 /* Progression notes on exercises */
@@ -384,6 +419,7 @@ input, textarea, select { font-size: 16px; font-family: inherit; }
 <!-- FAB: log unstructured activity -->
 <div class="fab-wrap" id="fabWrap" onclick="openActivityLogger()">
   <button class="fab" aria-label="Log activity">+</button>
+  <div class="fab-shadow"></div>
 </div>
 
 <!-- LOG UNSTRUCTURED ACTIVITY MODAL -->
