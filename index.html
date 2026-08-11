@@ -308,6 +308,28 @@ input, textarea, select { font-size: 16px; font-family: inherit; }
   * { animation-duration: 0.001s !important; transition-duration: 0.001s !important; }
   .celebrate-confetti, .phase-confetti { display: none !important; }
 }
+
+/* Progression notes on exercises */
+.ex-progress {
+  margin-top: 6px; padding: 8px 10px;
+  background: var(--bg-2); border-radius: 8px;
+  font-size: 11px; color: var(--ink-2); line-height: 1.45;
+}
+.ex-progress-lbl {
+  display: block; font-family: var(--f-num); font-size: 9px; font-weight: 800;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 3px;
+}
+.phase-freq { font-size: 12px; color: var(--ink-2); margin-top: 8px; line-height: 1.45; }
+
+/* Guide screen */
+.guide-body { font-size: 13px; color: var(--ink-2); line-height: 1.6; margin-top: 8px; }
+.guide-body p { margin-bottom: 10px; }
+.guide-body p:last-child { margin-bottom: 0; }
+.guide-body strong { color: var(--ink); font-weight: 700; }
+.guide-list { margin: 0; padding-left: 18px; }
+.guide-list li { margin-bottom: 6px; }
+.modal-hint { font-size: 11px; color: var(--ink-3); line-height: 1.45; margin: -4px 0 8px; }
 </style>
 </head>
 <body>
@@ -431,7 +453,8 @@ input, textarea, select { font-size: 16px; font-family: inherit; }
       </div>
     </div>
     <div class="modal-section">
-      <div class="modal-label">Any doming/coning along the midline under load?</div>
+      <div class="modal-label">Any doming or coning along the midline under load?</div>
+      <div class="modal-hint">A ridge or cone pushing up along your center line during core work. See the Guide for how to check.</div>
       <div class="yn-row">
         <button class="yn-opt" data-q="dome" data-v="yes" onclick="setCheckin('dome','yes')">Yes</button>
         <button class="yn-opt" data-q="dome" data-v="no" onclick="setCheckin('dome','no')">No</button>
@@ -454,6 +477,62 @@ input, textarea, select { font-size: 16px; font-family: inherit; }
     <div id="checkinResult"></div>
     <button class="btn-primary" id="checkinSaveBtn" onclick="submitCheckin()" disabled>Submit check-in</button>
   </div>
+</div>
+
+<!-- GUIDE SCREEN -->
+<div class="screen" id="screen-guide">
+  <div class="callout c-accent">Read this once before your first session, then come back whenever something feels off.</div>
+
+  <div class="card">
+    <div class="card-title">How to check for doming</div>
+    <div class="card-sub">This is the check the whole phase progression depends on.</div>
+    <div class="guide-body">
+      <p>Lie on your back, knees bent, feet flat. Place your fingertips just above your belly button, along the midline. Lift your head and shoulders slightly off the floor, like the start of a crunch.</p>
+      <p><strong>What you're feeling for:</strong> a ridge or cone pushing up along the center line, or a gap between the muscle edges that your fingers sink into. A soft gap of 1–2 fingers is common and usually fine. A visible ridge that pops up under load is the thing to watch.</p>
+      <p><strong>During exercise:</strong> glance down at your midline during core work. If you see a cone or ridge push up, that movement is too much right now — regress it or reduce range. Doming isn't damage, it's feedback.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Finding your pelvic floor</div>
+    <div class="guide-body">
+      <p>The contraction is a <strong>lift and squeeze inward and upward</strong> — the feeling of stopping gas, then drawing up. Not a clench of the glutes, not a breath hold, not a suck-in of the belly.</p>
+      <p><strong>The release matters as much as the lift.</strong> Let go fully between every rep and feel the drop back to neutral. A floor that can't relax is as much of a problem as one that can't contract.</p>
+      <p>Breathe throughout. Exhale as you lift, inhale as you release.</p>
+    </div>
+  </div>
+
+  <div class="callout c-amber">
+    <strong>Important:</strong> This protocol assumes a weak pelvic floor. Some postpartum floors are the opposite — too tight — and produce the same symptoms of leaking and pain. For those, strengthening work makes things worse. Nobody can tell which from the outside. If symptoms aren't improving after a few weeks, or if anything hurts, that's the signal to get assessed rather than push harder.
+  </div>
+
+  <div class="card">
+    <div class="card-title">Worth doing: a pelvic floor PT visit</div>
+    <div class="guide-body">
+      <p>A single evaluation gives you an actual diastasis measurement, tells you whether your floor is weak or tight, and turns this program from general principles into something built for your body. It's routine postpartum care in France and Australia and badly underused here. Ask your OB for a referral.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Joint laxity</div>
+    <div class="guide-body">
+      <p>Relaxin keeps joints looser than usual for months after birth, and longer while breastfeeding. Stretch to moderate range, not end range — especially hips, low back, and pelvis. If a stretch feels great in the moment, it's probably deeper than it should be right now.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Stop and get checked if</div>
+    <div class="guide-body">
+      <ul class="guide-list">
+        <li>Bleeding restarts or increases after activity</li>
+        <li>Heaviness, bulging, or dragging in the pelvis or vagina</li>
+        <li>Pain — pelvic, abdominal, low back, or pubic bone</li>
+        <li>Leaking that isn't improving over several weeks</li>
+        <li>A visible ridge along the midline that doesn't go away with regression</li>
+      </ul>
+    </div>
+  </div>
+  <div class="spacer"></div>
 </div>
 
 <!-- SESSION COMPLETE MODAL -->
@@ -537,6 +616,7 @@ input, textarea, select { font-size: 16px; font-family: inherit; }
 <!-- BOTTOM NAV -->
 <div class="bottom-nav">
   <button class="nav-btn" onclick="showScreen('program')"><div class="nav-icon on" id="ni-program"></div><span class="nav-lbl on" id="nl-program">Program</span></button>
+  <button class="nav-btn" onclick="showScreen('guide')"><div class="nav-icon" id="ni-guide"></div><span class="nav-lbl" id="nl-guide">Guide</span></button>
   <button class="nav-btn" onclick="showScreen('activity')"><div class="nav-icon" id="ni-activity"></div><span class="nav-lbl" id="nl-activity">Activity</span></button>
   <button class="nav-btn" onclick="showScreen('settings')"><div class="nav-icon" id="ni-settings"></div><span class="nav-lbl" id="nl-settings">Settings</span></button>
 </div>
@@ -629,32 +709,34 @@ let STATE = loadData();
 const PHASES = {
   1: {
     title: 'Core & Pelvic Floor Foundation',
-    blurb: 'Breathing, activation, and control — before anything gets loaded.',
+    blurb: 'Breathing, pelvic floor, and deep core control — before anything gets loaded.',
+    frequency: '3–4 sessions/week, alternating A and B. Plus walking most days.',
+    walking: 'Walk 20–30 min most days at an easy conversational pace. Build gradually — if you feel heaviness or dragging in the pelvis afterward, shorten it and rebuild slower.',
+    rest: 'Rest 30–45 sec between sets. Never hold your breath through a rep.',
     sessions: {
       A: {
-        label: 'Session A · Foundation Breath & Activation',
-        duration: '30–35 min',
+        label: 'Session A · Breath & Foundation',
+        duration: '20–25 min',
         exercises: [
-          { name: 'Diaphragmatic breathing (supine)', detail: '3 sets × 8 slow breaths — exhale = gentle pelvic floor + TA engagement' },
-          { name: 'Heel slides w/ TA activation', detail: '3 × 8 each side, controlled, no back arching' },
-          { name: 'Dead bug (arms only)', detail: '3 × 6 each side, exhale on the reach' },
-          { name: 'Glute bridge (bodyweight)', detail: '3 × 10, pause at top, no breath holding' },
-          { name: 'Bird dog', detail: '3 × 6 each side, slow and controlled' },
-          { name: 'Side-lying clamshells', detail: '2 × 12 each side' },
-          { name: 'Cat–cow mobility flow', detail: '2 minutes, easy pace' },
+          { name: 'Diaphragmatic breathing (supine)', detail: '2 × 8 slow breaths. Inhale wide into ribs and belly, exhale slow and full.', progress: 'When you can feel the ribs expand sideways without the chest lifting, move to the 360° version in Session B.' },
+          { name: 'Pelvic floor — sustained holds', detail: 'Start 3–5 sec hold × 8 reps. Build toward 10 sec × 10 over the phase. Exhale as you lift, fully release between every rep.', progress: 'Add 1 sec to the hold when the current length feels controlled all the way through the last rep.' },
+          { name: 'Pelvic floor — quick flicks', detail: '2 × 10 fast contractions, full release between each. This trains the reflex that catches a cough or sneeze.', progress: 'Add reps before adding speed. Sloppy fast reps train nothing.' },
+          { name: 'Heel slides w/ TA engagement', detail: '2 × 8 each side. Slide the heel out slowly, keep the low back still, exhale on the slide.', progress: 'When 2 × 8 is easy with no doming, progress to dead bug (arms only) in Session B.' },
+          { name: 'Glute bridge', detail: '2 × 10. Exhale as you lift, pause 2 sec at the top, lower slowly.', progress: 'Progress to the marching version in Session B before adding any load.' },
+          { name: 'Cat–cow', detail: '90 sec, easy pace, moving with the breath.', progress: null },
         ],
       },
       B: {
-        label: 'Session B · Stability & Light Load',
-        duration: '30–40 min',
+        label: 'Session B · Stability & Control',
+        duration: '25–30 min',
         exercises: [
-          { name: 'Diaphragmatic breathing (360° cues)', detail: '3 × 8 breaths, feel ribs expand in all directions' },
-          { name: 'Dead bug (full extension)', detail: '3 × 6 each side, slow tempo, exhale on extension' },
-          { name: 'Glute bridge march', detail: '3 × 8 each side' },
-          { name: 'Standing pallof press (light band)', detail: '3 × 8 each side, resist rotation' },
-          { name: 'Wall sit', detail: '2 × 20–30 sec, pain-free range only' },
-          { name: 'Seated marching w/ band', detail: '2 × 10 each side' },
-          { name: "Child's pose + hip flexor stretch", detail: '2 minutes' },
+          { name: 'Diaphragmatic breathing (360° cues)', detail: '2 × 8 breaths. Hands on lower ribs — feel expansion front, sides, and back.', progress: null },
+          { name: 'Pelvic floor — holds + quick flicks', detail: 'Same protocol as Session A. Holds first, then flicks.', progress: 'Once holds are comfortable lying down, try the same protocol seated, then standing — harder, and more like real life.' },
+          { name: 'Dead bug (arms only)', detail: '2 × 6 each side. Arms move, legs stay put. Exhale on the reach, ribs stay down.', progress: 'When solid, add one leg sliding along the floor. Full extension waits for Phase 2.' },
+          { name: 'Bird dog', detail: '2 × 6 each side. Slow, no rotation through the hips, reach long rather than high.', progress: 'Add a 2 sec pause at full reach before adding reps.' },
+          { name: 'Glute bridge march', detail: '2 × 8 each side. Hold the bridge, lift one foot without the hips dropping or twisting.', progress: 'If the hips dip, go back to the standard bridge for another week.' },
+          { name: 'Standing pallof press (light band)', detail: '2 × 8 each side. Use the lightest band available — should feel ~3/10 effort. Resist the twist, exhale as you press.', progress: 'Step further from the anchor before moving up a band size.' },
+          { name: 'Child\'s pose + gentle hip flexor stretch', detail: '2 min total. Moderate range only — see the laxity note in the Guide.', progress: null },
         ],
       },
     },
@@ -663,22 +745,23 @@ const PHASES = {
     title: 'Pilates–Strength Blend',
     blurb: 'Pilates-style control stays the base, with light-to-moderate resistance layered in.',
     locked: true,
-    preview: ['Full-body Pilates-based sessions', 'Light dumbbell/machine work added in', 'Still no high-impact or plyometric work', 'Unlocks once Phase 1 check-in clears'],
+    preview: ['Full dead bug and loaded core progressions', 'Light dumbbell and machine work added in', 'Pelvic floor work continues — standing and under load', 'Still no high-impact or plyometric work', 'Unlocks once the Phase 1 check-in clears'],
   },
   3: {
     title: 'Strength for Fat Loss & Toning',
     blurb: 'Traditional strength structure — progressive overload, moderate-rep hypertrophy work.',
     locked: true,
-    preview: ['Push/pull/legs or upper/lower split', 'Progressive overload each week', 'Gymnastics-era control & bracing patterns return', 'Unlocks once Phase 2 check-in clears'],
+    preview: ['Push/pull/legs or upper/lower split', 'Progressive overload each week', 'Gymnastics-era control and bracing patterns return', 'Impact work reintroduced last, and gradually', 'Unlocks once the Phase 2 check-in clears'],
   },
 };
+
 
 // ── Navigation ──
 function showScreen(name) {
   document.querySelectorAll('.modal').forEach(m => m.classList.remove('visible'));
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
-  ['program','activity','settings'].forEach(n => {
+  ['program','guide','activity','settings'].forEach(n => {
     document.getElementById('ni-' + n).classList.toggle('on', n === name);
     document.getElementById('nl-' + n).classList.toggle('on', n === name);
   });
@@ -701,6 +784,7 @@ function renderProgram() {
       ${[1,2,3].map(p => `<div class="phase-dot ${p < phase ? 'done' : (p === phase ? 'active' : '')}"></div>`).join('')}
     </div>
     <div class="phase-label">${totalSessions()} session${totalSessions() === 1 ? '' : 's'} completed</div>
+    ${PHASES[phase].frequency ? `<div class="phase-freq">${PHASES[phase].frequency}</div>` : ''}
   </div>`;
 
   const ph = PHASES[phase];
@@ -713,22 +797,31 @@ function renderProgram() {
     </div>`;
     html += `<div class="card">
       <div class="card-title">${sess.label}</div>
-      <div class="card-sub">${sess.duration}</div>
+      <div class="card-sub">${sess.duration} · ${ph.rest || ''}</div>
       <div style="margin-top:10px">
         ${sess.exercises.map((ex,i) => `
           <div class="ex-row">
             <div class="ex-check" id="exchk-${phase}-${sessKey}-${i}" onclick="toggleEx(${phase},'${sessKey}',${i})"></div>
-            <div>
+            <div style="flex:1;min-width:0">
               <div class="ex-name">${ex.name}</div>
               <div class="ex-detail">${ex.detail}</div>
+              ${ex.progress ? `<div class="ex-progress"><span class="ex-progress-lbl">Progress when ready</span>${ex.progress}</div>` : ''}
             </div>
           </div>`).join('')}
       </div>
       <button class="btn-primary" onclick="markSessionComplete('${sessKey}')">Mark session complete</button>
     </div>`;
 
+    if (ph.walking) {
+      html += `<div class="card">
+        <div class="card-title">🚶 Walking — most days</div>
+        <div class="guide-body" style="margin-top:6px">${ph.walking}</div>
+      </div>`;
+    }
+
     html += `<div class="callout c-accent">Feeling ready for more? Run a check-in before moving to Phase ${phase+1} — don't advance on a timer.</div>
-    <button class="btn-secondary" onclick="openCheckin()">Start check-in</button>`;
+    <button class="btn-secondary" onclick="openCheckin()">Start check-in</button>
+    <button class="btn-secondary" onclick="showScreen('guide')">Read the Guide — self-checks &amp; red flags</button>`;
   }
 
   // Preview cards for locked phases beyond current
